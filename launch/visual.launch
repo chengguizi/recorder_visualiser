@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="recorder_visualiser" type="recorder_visualiser" name="recorder_visualiser" output="screen">
+        
+    </node>
+</launch>
