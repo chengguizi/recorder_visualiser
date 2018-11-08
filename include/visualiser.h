@@ -37,6 +37,7 @@ public:
 
     enum TrajectoryName{
         IMU = 0,
+        IMU_HEURISTIC,
         VO,
         EKF,
         TRAJECTORYNAME_SIZE
@@ -48,6 +49,7 @@ public:
         // Eigen::Matrix3d R_pw = Eigen::Matrix3d::Identity(); // this pose frame in world frame
 
         DUtilsCV::Drawing::Plot::Style style = DUtilsCV::Drawing::Plot::Style('k',1, cv::LINE_AA);
+        cv::MarkerTypes marker =  cv::MARKER_SQUARE;
     };
 
     struct Parameters{
@@ -123,7 +125,7 @@ private:
     void drawGrid();
     void drawLabel();
     
-    void publish(const cv::Mat &img);
+    void publish(const cv::Mat &img, const ros::Time &stamp);
 };
 
 void TrajectoryVisualiser::setParams(const Parameters &params){
@@ -138,8 +140,10 @@ void TrajectoryVisualiser::setParams(const Parameters &params){
     subscribeTopics();
     
     clearPlot();
+
+    ROS_INFO("Created New Plot");
     
-    publish(getImagewithStamp());
+    publish(getImagewithStamp(), ros::Time(0));
 
     ROS_INFO("TrajectoryVisualiser(): Parameters Loaded.");
 }
@@ -168,11 +172,10 @@ void TrajectoryVisualiser::addPoint(const TrajectoryName &name, const cv::Point2
 }
 
 void TrajectoryVisualiser::poseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg, int idx){
-    
-    // ROS_INFO_STREAM("callback for " << params.settings[idx].name);
 
     if (ignore_n){
         assert(trajectories[(int)EKF].size() == 0);
+        ROS_INFO_STREAM("Ignoring " << ignore_n <<"frames");
         ignore_n--;
         return;
     }
@@ -194,10 +197,10 @@ void TrajectoryVisualiser::poseCallback(const geometry_msgs::PoseWithCovarianceS
     addPoint((TrajectoryName)idx,pt);
 
     if (last_stamp < stamp){
-        last_stamp = stamp;
+        
         cv::Mat outImg = getImagewithStamp();
         // publish the trajectories image
-        publish(outImg);
+        publish(outImg, stamp);
     }
 }
 
@@ -206,7 +209,7 @@ void TrajectoryVisualiser::resetCallback(const std_msgs::HeaderConstPtr &header)
     clearPlot();
     ignore_n = 2;
     cv::Mat outImg = getImagewithStamp();
-    publish(outImg);
+    publish(outImg, ros::Time(0));
 }
 
 // void TrajectoryVisualiser::imuCallback(const sensor_msgs::ImuConstPtr &imu){
@@ -216,12 +219,25 @@ void TrajectoryVisualiser::resetCallback(const std_msgs::HeaderConstPtr &header)
 cv::Mat TrajectoryVisualiser::getImagewithStamp(){
     cv::Mat outImg = implot.getImage().clone();
     cv::putText(outImg, std::to_string(last_stamp.toNSec()), cv::Point(5 /*column*/ ,10 /*row*/), cv::FONT_HERSHEY_SIMPLEX, 0.3, cv::Scalar(200,200,200));
+    
+    // Also draw a cross shape on the current location for each trajectory
+    for (int i=0; i<(int)TRAJECTORYNAME_SIZE; i++){
+
+        if (trajectories[i].empty())
+            continue;
+        cv::Point2d pt = trajectories[i].back();
+        int x = implot.toPxX(pt.x);
+        int y = implot.toPxY(pt.y);
+        cv::drawMarker(outImg, cv::Point(x,y), params.settings[i].style.color, 
+            params.settings[i].marker, 10, 1, CV_AA);
+    }
+    
     return outImg;
 }
 
 void TrajectoryVisualiser::drawLabel(){
     int height_offset = 10;
-    int width_offset_label = params.width - 80;
+    int width_offset_label = params.width - 100;
     // int width_offset_line = params.width - 20;
 
     cv::Mat refImg = implot.getImage();
@@ -261,10 +277,10 @@ void TrajectoryVisualiser::drawGrid(){
 
     DUtilsCV::Drawing::Plot::Style gridLine(cv::Scalar(230,230,230),0.5, cv::LINE_AA);
 
-    for (int vert = start_u ; vert <= end_u; vert++)
+    for (int vert = start_u ; vert <= end_u; vert=vert+2)
         implot.line(vert, params.vmin, vert, params.vmax, gridLine);
 
-    for (int hori = start_v ; hori <= end_v; hori++)
+    for (int hori = start_v ; hori <= end_v; hori=hori+2)
         implot.line(params.umin, hori, params.umax, hori, gridLine);
 
     cv::putText(refImg, "N", cv::Point( params.width/2 /*column*/ , 20 /*row*/), 
@@ -275,21 +291,23 @@ void TrajectoryVisualiser::drawGrid(){
     
 }
 
-void TrajectoryVisualiser::publish(const cv::Mat &img){
+void TrajectoryVisualiser::publish(const cv::Mat &img, const ros::Time &stamp){
 
-    static double last_publish_time = 0;
+    // static double last_publish_time = 0;
 
-    if (ros::Time::now().toSec() - last_publish_time < 0.08)
+    if ( (stamp - last_stamp).toSec() < 0.08 && !stamp.isZero()) // dont publish too frequently
         return;
 
     std_msgs::Header header;
-    header.stamp = last_stamp;
+    header.stamp = stamp;
     header.frame_id = "x-y plot";
     cv_bridge::CvImage cvImage = cv_bridge::CvImage(header, \
                     sensor_msgs::image_encodings::BGR8, img);
         _trajectory_pub.publish(cvImage.toImageMsg());
 
-    last_publish_time = ros::Time::now().toSec();
+    // last_publish_time = ros::Time::now().toSec();
+
+    last_stamp = stamp;
 }
 
 #endif /* VISUALISER_H */

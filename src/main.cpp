@@ -32,20 +32,29 @@ int main(int argc, char **argv){
     TrajectoryVisualiser::Parameters tv_params;
 
     tv_params.settings[TrajectoryVisualiser::IMU].name = "IMU Pose";
-    tv_params.settings[TrajectoryVisualiser::IMU].ros_topic = "/dead_reckoning/pose";
+    tv_params.settings[TrajectoryVisualiser::IMU].ros_topic = "/ekf_fusion/pose_integrated";
+    tv_params.settings[TrajectoryVisualiser::IMU].style = DUtilsCV::Drawing::Plot::Style(cv::Scalar(120,120,120), 0.6, cv::LINE_AA);
+    tv_params.settings[TrajectoryVisualiser::IMU].marker =  cv::MARKER_SQUARE;
+
+    tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].name = "IMU Heuristic Pose";
+    tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].ros_topic = "/dead_reckoning/pose";
+    tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].style = DUtilsCV::Drawing::Plot::Style('k', 0.6, cv::LINE_AA);
+    tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].marker = cv::MARKER_TRIANGLE_UP;
 
     tv_params.settings[TrajectoryVisualiser::VO].name = "VO Pose";
     tv_params.settings[TrajectoryVisualiser::VO].ros_topic = "/stereo_odometer/pose";
     tv_params.settings[TrajectoryVisualiser::VO].style = DUtilsCV::Drawing::Plot::Style('g', 0.6, cv::LINE_AA);
+    tv_params.settings[TrajectoryVisualiser::VO].marker =  cv::MARKER_TILTED_CROSS;
 
     tv_params.settings[TrajectoryVisualiser::EKF].name = "Fusion Pose";
     tv_params.settings[TrajectoryVisualiser::EKF].ros_topic = "/ekf_fusion/pose";
     tv_params.settings[TrajectoryVisualiser::EKF].style = DUtilsCV::Drawing::Plot::Style('r', 1, cv::LINE_AA);
+    tv_params.settings[TrajectoryVisualiser::EKF].marker = cv::MARKER_CROSS;
 
     // decide the dimension of the visualisation and the scale
-    tv_params.width = tv_params.height = 400;
-    tv_params.umin = tv_params.vmin = -15;
-    tv_params.umax = tv_params.vmax = 15;
+    tv_params.width = tv_params.height = 480;
+    tv_params.umin = tv_params.vmin = -24;
+    tv_params.umax = tv_params.vmax = 24;
     tv.setParams(tv_params);
 
     ros::spin();
