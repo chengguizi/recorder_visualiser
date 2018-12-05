@@ -1,5 +1,7 @@
 <launch>
-    <node pkg="recorder_visualiser" type="recorder_visualiser" name="recorder_visualiser" output="screen">
-        
+    <node pkg="recorder_visualiser" type="recorder_visualiser" name="visualiser" output="screen">
+    </node>
+
+    <node cwd="ROS_HOME" pkg="recorder_visualiser" type="rosbag_record.py" name="recorder" output="screen">
     </node>
 </launch>

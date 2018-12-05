@@ -295,7 +295,7 @@ void TrajectoryVisualiser::publish(const cv::Mat &img, const ros::Time &stamp){
 
     // static double last_publish_time = 0;
 
-    if ( (stamp - last_stamp).toSec() < 0.08 && !stamp.isZero()) // dont publish too frequently
+    if ( (stamp - last_stamp).toSec() < 0.3 && !stamp.isZero()) // dont publish too frequently
         return;
 
     std_msgs::Header header;
