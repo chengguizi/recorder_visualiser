@@ -42,7 +42,7 @@ int main(int argc, char **argv){
     tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].marker = cv::MARKER_TRIANGLE_UP;
 
     tv_params.settings[TrajectoryVisualiser::VO].name = "VO Pose";
-    tv_params.settings[TrajectoryVisualiser::VO].ros_topic = "/stereo_odometer/pose";
+    tv_params.settings[TrajectoryVisualiser::VO].ros_topic = "/stereo_odometer/pose_local";
     tv_params.settings[TrajectoryVisualiser::VO].style = DUtilsCV::Drawing::Plot::Style('g', 0.6, cv::LINE_AA);
     tv_params.settings[TrajectoryVisualiser::VO].marker =  cv::MARKER_TILTED_CROSS;
 
@@ -52,9 +52,12 @@ int main(int argc, char **argv){
     tv_params.settings[TrajectoryVisualiser::EKF].marker = cv::MARKER_CROSS;
 
     // decide the dimension of the visualisation and the scale
-    tv_params.width = tv_params.height = 480;
-    tv_params.umin = tv_params.vmin = -24;
-    tv_params.umax = tv_params.vmax = 24;
+    tv_params.width = tv_params.height = 512;
+    // tv_params.roi_width = tv_params.roi_height = 256;
+    tv_params.umin = tv_params.vmin = -64; // in meters
+    tv_params.umax = tv_params.vmax = 64; // in meters
+
+    tv_params.grid_size = 5;
     tv.setParams(tv_params);
 
     ros::spin();

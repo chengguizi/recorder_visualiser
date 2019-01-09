@@ -55,6 +55,9 @@ public:
     struct Parameters{
         int width, height;
         int umin, umax, vmin, vmax;
+        int roi_width, roi_height;
+
+        double grid_size = 5;
         TrajectorySettings settings[TRAJECTORYNAME_SIZE];
         std::string imu_ros_topic = "/imu0";
     };
@@ -158,15 +161,17 @@ void TrajectoryVisualiser::addPoint(const TrajectoryName &name, const cv::Point2
     
     if (trajectories[idx].size() < 2)
         trajectories[idx].push_back(pt);
-    else{
-        trajectories[idx].erase(trajectories[idx].begin());
-        trajectories[idx].push_back(pt);
+    else{ // == 2
+        trajectories[idx][0] = trajectories[idx][1];
+        trajectories[idx][1] = pt;
+        // trajectories[idx].erase(trajectories[idx].begin());
+        // trajectories[idx].push_back(pt);
     }
 
-    if (trajectories[idx].size() > 1){
-        auto size = trajectories[idx].size();
-        cv::Point2d prevPt = trajectories[idx][size-2];
-        cv::Point2d currPt = trajectories[idx][size-1];
+    if (trajectories[idx].size() == 2){
+        // auto size = trajectories[idx].size();
+        cv::Point2d prevPt = trajectories[idx][0];
+        cv::Point2d currPt = trajectories[idx][1];
         implot.line(prevPt.x, prevPt.y, currPt.x, currPt.y, params.settings[idx].style);
     }
 }
@@ -197,10 +202,15 @@ void TrajectoryVisualiser::poseCallback(const geometry_msgs::PoseWithCovarianceS
     addPoint((TrajectoryName)idx,pt);
 
     if (last_stamp < stamp){
+
+        if ( (stamp - last_stamp).toSec() < 0.3 && !stamp.isZero()) // dont publish too frequently
+            return;
         
         cv::Mat outImg = getImagewithStamp();
         // publish the trajectories image
         publish(outImg, stamp);
+
+        last_stamp = stamp;
     }
 }
 
@@ -242,20 +252,26 @@ void TrajectoryVisualiser::drawLabel(){
 
     cv::Mat refImg = implot.getImage();
 
-    for(int i=0; i<(int)TRAJECTORYNAME_SIZE; i++){
+    int i;
+    for(i=0; i<(int)TRAJECTORYNAME_SIZE; i++){
         int offset = i*10;
         cv::putText(refImg, params.settings[i].name, cv::Point(width_offset_label /*column*/ , height_offset + offset /*row*/), 
             cv::FONT_HERSHEY_SIMPLEX, 0.35, params.settings[i].style.color);
     }
 
+    int offset = i*10;
+    std::string grid_size_str = "grid_size=" + std::to_string((int)params.grid_size);
+    cv::putText(refImg, grid_size_str, cv::Point(width_offset_label /*column*/ , height_offset + offset /*row*/), 
+            cv::FONT_HERSHEY_SIMPLEX, 0.35, cv::Scalar(0,0,0));
+
 }
 
 void TrajectoryVisualiser::drawGrid(){
 
-    int start_u = std::ceil(params.umin);
-    int end_u = std::floor(params.umax);
-    int start_v = std::ceil(params.vmin);
-    int end_v = std::floor(params.vmax);
+    int start_u = std::ceil(params.umin/params.grid_size)*params.grid_size;
+    int end_u = std::floor(params.umax/params.grid_size)*params.grid_size;
+    int start_v = std::ceil(params.vmin/params.grid_size)*params.grid_size;
+    int end_v = std::floor(params.vmax/params.grid_size)*params.grid_size;
     cv::Mat refImg = implot.getImage();
 
     cv::Point2i p1, p2;
@@ -277,10 +293,10 @@ void TrajectoryVisualiser::drawGrid(){
 
     DUtilsCV::Drawing::Plot::Style gridLine(cv::Scalar(230,230,230),0.5, cv::LINE_AA);
 
-    for (int vert = start_u ; vert <= end_u; vert=vert+2)
+    for (int vert = start_u ; vert <= end_u; vert=vert+5) // grid is drawn every 5 meters
         implot.line(vert, params.vmin, vert, params.vmax, gridLine);
 
-    for (int hori = start_v ; hori <= end_v; hori=hori+2)
+    for (int hori = start_v ; hori <= end_v; hori=hori+5) // grid is drawn every 5 meters
         implot.line(params.umin, hori, params.umax, hori, gridLine);
 
     cv::putText(refImg, "N", cv::Point( params.width/2 /*column*/ , 20 /*row*/), 
@@ -295,8 +311,7 @@ void TrajectoryVisualiser::publish(const cv::Mat &img, const ros::Time &stamp){
 
     // static double last_publish_time = 0;
 
-    if ( (stamp - last_stamp).toSec() < 0.3 && !stamp.isZero()) // dont publish too frequently
-        return;
+    
 
     std_msgs::Header header;
     header.stamp = stamp;
@@ -306,8 +321,6 @@ void TrajectoryVisualiser::publish(const cv::Mat &img, const ros::Time &stamp){
         _trajectory_pub.publish(cvImage.toImageMsg());
 
     // last_publish_time = ros::Time::now().toSec();
-
-    last_stamp = stamp;
 }
 
 #endif /* VISUALISER_H */
