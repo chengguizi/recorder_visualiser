@@ -42,12 +42,12 @@ int main(int argc, char **argv){
     tv_params.settings[TrajectoryVisualiser::IMU_HEURISTIC].marker = cv::MARKER_TRIANGLE_UP;
 
     tv_params.settings[TrajectoryVisualiser::VO].name = "VO Pose";
-    tv_params.settings[TrajectoryVisualiser::VO].ros_topic = "/stereo_odometer/pose_local";
+    tv_params.settings[TrajectoryVisualiser::VO].ros_topic = "/stereo_odometer/pose";
     tv_params.settings[TrajectoryVisualiser::VO].style = DUtilsCV::Drawing::Plot::Style('g', 0.6, cv::LINE_AA);
     tv_params.settings[TrajectoryVisualiser::VO].marker =  cv::MARKER_TILTED_CROSS;
 
     tv_params.settings[TrajectoryVisualiser::EKF].name = "Fusion Pose";
-    tv_params.settings[TrajectoryVisualiser::EKF].ros_topic = "/ekf_fusion/pose";
+    tv_params.settings[TrajectoryVisualiser::EKF].ros_topic = "/ekf_fusion/pose_local";
     tv_params.settings[TrajectoryVisualiser::EKF].style = DUtilsCV::Drawing::Plot::Style('r', 1, cv::LINE_AA);
     tv_params.settings[TrajectoryVisualiser::EKF].marker = cv::MARKER_CROSS;
 
