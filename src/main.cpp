@@ -56,10 +56,10 @@ int main(int argc, char **argv){
     // decide the dimension of the visualisation and the scale
     tv_params.width = tv_params.height = 512;
     // tv_params.roi_width = tv_params.roi_height = 256;
-    tv_params.umin = tv_params.vmin = -64; // in meters
-    tv_params.umax = tv_params.vmax = 64; // in meters
+    tv_params.umin = tv_params.vmin = -24; // in meters
+    tv_params.umax = tv_params.vmax = 24; // in meters
 
-    tv_params.grid_size = 5;
+    tv_params.grid_size = 2;
     tv.setParams(tv_params);
 
     ros::spin();
