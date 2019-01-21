@@ -293,10 +293,10 @@ void TrajectoryVisualiser::drawGrid(){
 
     DUtilsCV::Drawing::Plot::Style gridLine(cv::Scalar(230,230,230),0.5, cv::LINE_AA);
 
-    for (int vert = start_u ; vert <= end_u; vert=vert+5) // grid is drawn every 5 meters
+    for (int vert = start_u ; vert <= end_u; vert=vert+params.grid_size) // grid is drawn
         implot.line(vert, params.vmin, vert, params.vmax, gridLine);
 
-    for (int hori = start_v ; hori <= end_v; hori=hori+5) // grid is drawn every 5 meters
+    for (int hori = start_v ; hori <= end_v; hori=hori+params.grid_size) // grid is drawn
         implot.line(params.umin, hori, params.umax, hori, gridLine);
 
     cv::putText(refImg, "N", cv::Point( params.width/2 /*column*/ , 20 /*row*/), 

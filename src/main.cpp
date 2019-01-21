@@ -28,6 +28,8 @@ int main(int argc, char **argv){
 	ros::NodeHandle nh;
 	ros::NodeHandle local_nh("~");
 
+    // ROS_ASSERT(local_nh.getParam("global_frame", params.global_frame));
+
     TrajectoryVisualiser tv;
     TrajectoryVisualiser::Parameters tv_params;
 
