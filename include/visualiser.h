@@ -195,8 +195,8 @@ void TrajectoryVisualiser::poseCallback(const geometry_msgs::PoseWithCovarianceS
     // pt.x = pt3d.x; // East direction in ENU
     // pt.y = pt3d.y; // North direction in ENU
 
-    pt.x = msg->pose.pose.position.x; // This assume all pose received are in common world frame (e.g. ENU)
-    pt.y = -msg->pose.pose.position.y;
+    pt.x = -msg->pose.pose.position.y; // This assume all pose received are in common world frame (e.g. NWU)
+    pt.y = -msg->pose.pose.position.x;
     
     auto stamp = msg->header.stamp;
     addPoint((TrajectoryName)idx,pt);
